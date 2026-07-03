@@ -1,0 +1,44 @@
+name: Weekly Activity Check
+
+# Runs every Monday 03:00 UTC. Comments on the linked SoW issue if no commits
+# landed on main in the trailing 7 days, so faculty attention goes where
+# it's needed instead of everyone reading every repo every week.
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  check-activity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for commits in last 7 days
+        id: activity
+        run: |
+          COUNT=$(git log --since="7 days ago" --oneline | wc -l)
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Flag open SoW issues if inactive
+        if: steps.activity.outputs.count == '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "sow"
+            });
+            for (const issue of issues.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: "⚠️ No commits on `main` in the last 7 days. Faculty: check in with the student/team."
+              });
+            }
