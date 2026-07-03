@@ -1,5 +1,7 @@
 # Phase 3: Hardware Diagnostics & Lessons Learned
 
+demo for pr
+
 Following the studio's core requirement of documenting structural setbacks, this log details how our hardware implementation phase deviated from our mathematical assumptions.
 
 ## 1. Hardware Verification Setup
